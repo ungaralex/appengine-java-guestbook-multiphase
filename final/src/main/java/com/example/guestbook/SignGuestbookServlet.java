@@ -27,7 +27,10 @@ import com.google.appengine.api.users.UserService;
 import com.google.appengine.api.users.UserServiceFactory;
 
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
 import java.util.Date;
+import java.util.List;
 
 import javax.servlet.http.HttpServlet;
 import javax.servlet.http.HttpServletRequest;
@@ -62,6 +65,17 @@ public class SignGuestbookServlet extends HttpServlet {
 
     // Use Objectify to save the greeting and now() is used to make the call synchronously as we
     // will immediately get a new page using redirect and we want the data to be present.
+    List<Greeting> greetings = ObjectifyService.ofy().load().type(Greeting.class).list();
+    Collections.sort(greetings, new Comparator<Greeting>() {
+      @Override
+      public int compare(Greeting o1, Greeting o2) {
+        return o1.date.compareTo(o2.date);
+      }
+    });
+    if (greetings.size() >= 10) {
+      ObjectifyService.ofy().delete().entity(greetings.get(0));
+    }
+
     ObjectifyService.ofy().save().entity(greeting).now();
 
     resp.sendRedirect("/guestbook.jsp?guestbookName=" + guestbookName);
